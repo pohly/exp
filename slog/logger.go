@@ -21,7 +21,7 @@ func init() {
 }
 
 // Default returns the default Logger.
-func Default() *Logger { return defaultLogger.Load().(*Logger) }
+func Default() Logger { return *defaultLogger.Load().(*Logger) }
 
 // SetDefault makes l the default Logger.
 // After this call, output from the log package's default Logger
@@ -94,7 +94,7 @@ func (l *Logger) Handler() Handler { return l.handler }
 // The new Logger shares the old Logger's context.
 // The new Logger's handler is the result of calling WithAttrs on the receiver's
 // handler.
-func (l *Logger) With(args ...any) *Logger {
+func (l Logger) With(args ...any) Logger {
 	var (
 		attr  Attr
 		attrs []Attr
@@ -103,7 +103,7 @@ func (l *Logger) With(args ...any) *Logger {
 		attr, args = argsToAttr(args)
 		attrs = append(attrs, attr)
 	}
-	c := l.clone()
+	c := l
 	c.handler = l.handler.WithAttrs(attrs)
 	return c
 }
@@ -122,15 +122,15 @@ func (l *Logger) WithGroup(name string) *Logger {
 }
 
 // New creates a new Logger with the given non-nil Handler and a nil context.
-func New(h Handler) *Logger {
+func New(h Handler) Logger {
 	if h == nil {
 		panic("nil Handler")
 	}
-	return &Logger{handler: h}
+	return Logger{handler: h}
 }
 
 // With calls Logger.With on the default logger.
-func With(args ...any) *Logger {
+func With(args ...any) Logger {
 	return Default().With(args...)
 }
 
@@ -211,7 +211,7 @@ func (l *Logger) ErrorCtx(ctx context.Context, msg string, args ...any) {
 // log is the low-level logging method for methods that take ...any.
 // It must always be called directly by an exported logging method
 // or function, because it uses a fixed call depth to obtain the pc.
-func (l *Logger) log(ctx context.Context, level Level, msg string, args ...any) {
+func (l Logger) log(ctx context.Context, level Level, msg string, args ...any) {
 	if !l.Enabled(ctx, level) {
 		return
 	}
@@ -231,7 +231,7 @@ func (l *Logger) log(ctx context.Context, level Level, msg string, args ...any) 
 }
 
 // logAttrs is like [Logger.log], but for methods that take ...Attr.
-func (l *Logger) logAttrs(ctx context.Context, level Level, msg string, attrs ...Attr) {
+func (l Logger) logAttrs(ctx context.Context, level Level, msg string, attrs ...Attr) {
 	if !l.Enabled(ctx, level) {
 		return
 	}

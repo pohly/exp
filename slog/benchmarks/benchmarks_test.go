@@ -196,4 +196,4 @@ func BenchmarkWith(b *testing.B) {
 	}
 }
 
-var globalLogger *slog.Logger
+var globalLogger slog.Logger
