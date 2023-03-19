@@ -498,3 +498,11 @@ func callerPC(depth int) uintptr {
 	runtime.Callers(depth, pcs[:])
 	return pcs[0]
 }
+
+func TestNullLogger(t *testing.T) {
+	var logger Logger
+	enabled := logger.Enabled(context.Background(), LevelInfo)
+	if enabled {
+		t.Error("null Logger should disable logging")
+	}
+}
