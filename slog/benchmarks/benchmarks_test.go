@@ -145,3 +145,55 @@ func BenchmarkAttrs(b *testing.B) {
 		})
 	}
 }
+
+func BenchmarkWith(b *testing.B) {
+	for _, handler := range []struct {
+		name string
+		h    slog.Handler
+	}{
+		{"Text discard", slog.NewTextHandler(io.Discard)},
+		{"JSON discard", slog.NewJSONHandler(io.Discard)},
+	} {
+		logger := slog.New(handler.h)
+		b.Run(handler.name, func(b *testing.B) {
+			for _, call := range []struct {
+				name string
+				args []any
+			}{
+				{
+					"no parameters",
+					[]any{},
+				},
+				{
+					"1 key/value pair",
+					[]any{
+						"string", TestString,
+					},
+				},
+				{
+					"5 key/value pairs",
+					[]any{
+						"string", TestString,
+						"status", TestInt,
+						"duration", TestDuration,
+						"time", TestTime,
+						"error", TestError,
+					},
+				},
+			} {
+				b.Run(call.name, func(b *testing.B) {
+					b.ReportAllocs()
+					b.RunParallel(func(pb *testing.PB) {
+						l := logger
+						for pb.Next() {
+							l = logger.With(call.args...)
+						}
+						globalLogger = l
+					})
+				})
+			}
+		})
+	}
+}
+
+var globalLogger *slog.Logger
